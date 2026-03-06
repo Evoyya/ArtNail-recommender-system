@@ -5,6 +5,9 @@ Tables/**/*.csv
 *.pkl
 *.parquet
 
+results/
+*.npz *.pkl
+
 # Python
 __pycache__/
 *.pyc
