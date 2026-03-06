@@ -1,6 +1,9 @@
 # Данные (НЕ коммитим CSV!)
 Tables/**/*.csv
 *.csv
+*.xlsx
+*.pkl
+*.parquet
 
 # Python
 __pycache__/
