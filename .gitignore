@@ -1,0 +1,17 @@
+# Данные (НЕ коммитим CSV!)
+Tables/**/*.csv
+*.csv
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# VSCode
+.vscode/settings.json
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
