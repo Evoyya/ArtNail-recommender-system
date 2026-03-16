@@ -29,7 +29,7 @@ def build_year_user_items():
 
     df_year = pd.concat(dfs, ignore_index=True)
 
-
+    
     out_path = out_dir / "User_items_year.csv"
     df_year.to_csv(out_path, index=False)
 
@@ -39,7 +39,14 @@ def build_year_user_items():
 
     return df_year
 
+def print_info_df_year(df_year):
+    print(df_year.info())
+
 if __name__ == "__main__":
-    build_year_user_items()
+   df_year = build_year_user_items()
+   print_info_df_year(df_year)
+
+
+
 
 
