@@ -31,7 +31,7 @@ def build_year_user_items():
 
     
     out_path = out_dir / "User_items_year.csv"
-    df_year.to_csv(out_path, index=False)
+    df_year.to_csv(out_path, index=False, sep=',')
 
     print(f"Склеено файлов: {len(dfs)}")
     print(f"Итоговая таблица: {df_year.shape[0]} строк, {df_year.shape[1]} столбцов")
