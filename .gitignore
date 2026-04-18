@@ -8,6 +8,8 @@ Tables/**/*.csv
 results/
 *.npz *.pkl
 
+catboost_info/
+
 # Python
 __pycache__/
 *.pyc
