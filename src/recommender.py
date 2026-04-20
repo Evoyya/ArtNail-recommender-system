@@ -1,27 +1,43 @@
 import pandas as pd
 import joblib
 from catboost import CatBoostClassifier
+from utils import IDMapper
+import os
+
+
+
 
 class ArtNailRecommender:
-    def __init__(self, cb_model_path, ials_model_path, user_features_path, item_features_path, user_item_matrix):
+    def __init__(self, cb_model_path, ials_model_path, user_features_path, item_features_path, user_item_matrix, mappers_path):
         # Загружаем всё при инициализации класса
         self.cb_model = CatBoostClassifier().load_model(cb_model_path)
         self.ials_model = joblib.load(ials_model_path)
         self.user_features = joblib.load(user_features_path)
         self.item_features = joblib.load(item_features_path)
         self.user_item_matrix = user_item_matrix
-
+        self.mappers = joblib.load(mappers_path)
+        
         # Список фичей, которые ожидает CatBoost
         self.features_list = self.cb_model.feature_names_
 
     def recommend(self, user_id, top_n=5, category_cap=2):
+
+        user_mapper = self.mappers['user_mapper']
+        item_mapper = self.mappers['item_mapper']
+        user_idx = user_mapper.id_to_idx.get(user_id)
+
+        if user_idx is None:
+            # Обработка холодного старта, если пользователя нет в матрице
+            return self.item_features.sort_values('item_unique_users', ascending=False).head(top_n)
+        
         # 1. Генерация кандидатов через iALS
         # iALS возвращает индексы и скоры. Мы берем [0], так как юзер один
-        ids, scores = self.ials_model.recommend([user_id], self.user_item_matrix[user_id], N=50)
-        
+        ids, scores = self.ials_model.recommend(user_idx, self.user_item_matrix[user_idx], N=50)
+        real_item_ids = [item_mapper.idx_to_id[idx] for idx in ids]
+
         user_cands = pd.DataFrame({
-            'id_item': ids[0],
-            'ials_score': scores[0]
+            'id_item': real_item_ids,
+            'ials_score': scores
         })
         user_cands['id_user'] = user_id
 

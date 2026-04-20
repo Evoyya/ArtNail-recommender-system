@@ -14,7 +14,8 @@ art_nail = ArtNailRecommender(
     user_features_path=os.path.join(BASE_DIR, '..', 'results', 'feature_tables', 'user_features.pkl'),
     item_features_path=os.path.join(BASE_DIR, '..', 'results', 'feature_tables', 'item_features.pkl'),
 
-    user_item_matrix=user_item_matrix
+    user_item_matrix=user_item_matrix,
+    mappers_path=os.path.join(BASE_DIR, '..', 'results', 'mappers', 'id_mappers.pkl')
 )
 
 
