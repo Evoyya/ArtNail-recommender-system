@@ -1,5 +1,6 @@
 # Данные (НЕ коммитим CSV!)
 Tables/**/*.csv
+Tables/**/*/*.csv
 *.csv
 *.xlsx
 *.pkl
@@ -18,7 +19,7 @@ venv/
 
 # VSCode
 .vscode/settings.json
-.ipynb_checkpoints/
+.ipynb_checkpoints
 
 # OS
 .DS_Store
