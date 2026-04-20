@@ -3,12 +3,13 @@ import joblib
 from catboost import CatBoostClassifier
 
 class ArtNailRecommender:
-    def __init__(self, cb_model_path, ials_model_path, user_features_path, item_features_path):
+    def __init__(self, cb_model_path, ials_model_path, user_features_path, item_features_path, user_item_matrix):
         # Загружаем всё при инициализации класса
         self.cb_model = CatBoostClassifier().load_model(cb_model_path)
         self.ials_model = joblib.load(ials_model_path)
         self.user_features = joblib.load(user_features_path)
         self.item_features = joblib.load(item_features_path)
+        self.user_item_matrix = user_item_matrix
 
         # Список фичей, которые ожидает CatBoost
         self.features_list = self.cb_model.feature_names_
@@ -16,7 +17,7 @@ class ArtNailRecommender:
     def recommend(self, user_id, top_n=5, category_cap=2):
         # 1. Генерация кандидатов через iALS
         # iALS возвращает индексы и скоры. Мы берем [0], так как юзер один
-        ids, scores = self.ials_model.recommend([user_id], n=50)
+        ids, scores = self.ials_model.recommend([user_id], self.user_item_matrix[user_id], N=50)
         
         user_cands = pd.DataFrame({
             'id_item': ids[0],
@@ -25,7 +26,7 @@ class ArtNailRecommender:
         user_cands['id_user'] = user_id
 
         # 2. Приклеиваем статику услуг (имя, категория, популярность)
-        user_cands = user_cands.merge(self.item_stats, on='id_item', how='left')
+        user_cands = user_cands.merge(self.item_features, on='id_item', how='left')
 
         # 3. Приклеиваем фичи юзера
         u_feat = self.user_features[self.user_features['id_user'] == user_id]
