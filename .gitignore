@@ -1,4 +1,3 @@
-# Данные (НЕ коммитим CSV!)
 Tables/**/*.csv
 Tables/BaseTable/source materials/
 *.csv
