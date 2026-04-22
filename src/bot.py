@@ -6,6 +6,13 @@ from dotenv import load_dotenv
 from aiogram import F
 import scipy.sparse as sp
 from recommender import ArtNailRecommender
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+logger.info("Начинаю загрузку моделей... Пожалуйста, подожди.")
+
 
 load_dotenv()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,7 +48,7 @@ async def handle_id(messege: types.Message):
         try:
             recs = recommender.recommend(user_id=user_id, top_n=5, category_cap=2)
 
-            if not recs.empty:
+            if recs.empty:
                 await messege.answer("❌ Не удалось найти рекомендации для этого ID.")
                 return 
         
