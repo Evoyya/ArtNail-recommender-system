@@ -4,7 +4,9 @@ import pandas as pd
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from dotenv import load_dotenv
-from aiogram import types, KeyboardButton, ReplyKeyboardMarkup, F
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.filters import Command
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 import scipy.sparse as sp
 from recommender import ArtNailRecommender
 import logging
