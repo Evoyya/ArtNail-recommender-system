@@ -1,0 +1,14 @@
+.venv/
+.git/
+.env
+__pycache__/
+*.ipynb
+*.pyc
+results/plots/
+
+Tables/**/*.csv
+Tables/BaseTable/source materials/
+*.csv
+*.xlsx
+*.pkl
+*.parquet
