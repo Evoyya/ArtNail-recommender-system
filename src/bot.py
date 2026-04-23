@@ -4,7 +4,7 @@ import pandas as pd
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from dotenv import load_dotenv
-from aiogram import F
+from aiogram import types, KeyboardButton, ReplyKeyboardMarkup, F
 import scipy.sparse as sp
 from recommender import ArtNailRecommender
 import logging
@@ -43,12 +43,38 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)  
 dp = Dispatcher()
 
+main_menu = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="ℹ️ Как пользоваться"), KeyboardButton(text="📝 Пример ввода")]
+    ],
+    resize_keyboard=True
+)
+
 @dp.message(Command("start"))
 async def cdm_start(message: types.Message):
-    await message.answer("👋 Привет! Я помощник ArtNail.\nПришли мне номер телефона или ID клиента, чтобы получить персональные рекомендации.")
+    await message.answer("👋 **Добро пожаловать в ArtNail помощник!**\n\n"
+        "Просто введите номер телефона клиента (11 цифр) или его ID, "
+        "и я подскажу, какие услуги ему предложить.",
+        reply_markup=main_menu,
+        parse_mode="Markdown"
+    )
+
+@dp.message(F.text == "ℹ️ Как пользоваться")
+async def cmd_help(message: types.Message):
+    await message.answer(
+        "Введите номер телефона в любом формате: `89991234567` или `+7 (999)...`.\n"
+        "Бот найдет клиента и покажет 5 наиболее подходящих ему услуг из разных категорий."
+    )
 
 @dp.message()
 async def handle_message(message: types.Message):
+    if not message.text:
+        await message.answer("❌ Пожалуйста, введите текстовое сообщение с номером телефона или ID клиента.")
+        return  
+    
+    if message.text == "📝 Пример ввода":
+        await message.answer("Примеры:\n`1050` (ID)\n`89001112233` (Телефон)")
+        return
     # Очистка ввода: оставляем только цифры
     raw_text = "".join(filter(str.isdigit, message.text))
     
@@ -86,13 +112,20 @@ async def handle_message(message: types.Message):
             await message.answer("🤷‍♂️ Не удалось найти рекомендации для этого клиента.")
             return 
     
-        response = f"✨ **Рекомендации для клиента {user_id}:**\n\n"
+        response = f"📋 **ЛУЧШИЕ ПРЕДЛОЖЕНИЯ ДЛЯ КЛИЕНТА:**\n"
+        response += f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n\n"
+
+        # Мапим скоры в человеческие названия (опционально)
         for i, row in recs.iterrows():
-            response += f"✅ **{row['item_name']}**\n"
-            response += f"🔹 _{row['item_category']}_\n"
-            response += f"📊 Вероятность: {row['cb_score']:.1%}\n"
-            response += "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+            # Первый элемент в списке — самый релевантный
+            prefix = "🔥 ТОП:" if i == 0 else "✨"
+            
+            response += f"{prefix} **{row['item_name']}**\n"
+            response += f"📁 _{row['item_category']}_\n\n"
         
+        response += f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+        response += "💡 _Предложите эти услуги при записи или оплате_"
+    
         await message.answer(response, parse_mode="Markdown")
         
     except Exception as e:
