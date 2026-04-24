@@ -2,6 +2,7 @@ Tables/**/*.csv
 Tables/BaseTable/source materials/
 *.csv
 *.xlsx
+*.xls
 *.pkl
 *.parquet
 
