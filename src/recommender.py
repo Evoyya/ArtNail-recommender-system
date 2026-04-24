@@ -8,7 +8,34 @@ import os
 
 
 class ArtNailRecommender:
+    """
+        Класс-рекомендатель для проекта ArtNail, реализующий логику Two-Stage Ranking.
+
+        Система сначала генерирует кандидатов с помощью модели коллаборативной 
+        фильтрации (iALS), затем обогащает их признаками пользователей/услуг 
+        и переранжирует с помощью градиентного бустинга (CatBoost).
+
+        Attributes:
+            cb_model: Загруженная модель CatBoostClassifier для финального ранжирования.
+            ials_model: Загруженная модель implicit.als для генерации кандидатов.
+            user_features (pd.DataFrame): Таблица с признаками пользователей.
+            item_features (pd.DataFrame): Таблица с признаками и метаданными услуг.
+            user_item_matrix (csr_matrix): Матрица взаимодействий для iALS.
+            mappers (dict): Словарь с объектами IDMapper для пользователей и товаров.
+            features_list (list): Список имен признаков, необходимых для CatBoost.
+        """
     def __init__(self, cb_model_path, ials_model_path, user_features_path, item_features_path, user_item_matrix, mappers_path):
+        """
+        Инициализирует рекомендатель, загружая все необходимые артефакты.
+
+        Args:
+            cb_model_path (str): Путь к файлу модели CatBoost.
+            ials_model_path (str): Путь к файлу модели iALS.
+            user_features_path (str): Путь к дампу признаков пользователей.
+            item_features_path (str): Путь к дампу признаков услуг.
+            user_item_matrix: Матрица взаимодействий в формате CSR.
+            mappers_path (str): Путь к дампу словарей маппинга (IDMapper).
+        """
         # Загружаем всё при инициализации класса
         self.cb_model = CatBoostClassifier().load_model(cb_model_path)
         self.ials_model = joblib.load(ials_model_path)
@@ -21,7 +48,26 @@ class ArtNailRecommender:
         self.features_list = self.cb_model.feature_names_
 
     def recommend(self, user_id, top_n=5, category_cap=2):
+        """
+        Формирует персональные рекомендации для пользователя.
 
+        Процесс включает:
+        1. Проверку пользователя на "холодный старт".
+        2. Отбор топ-50 кандидатов через iALS.
+        3. Feature Engineering (слияние кандидатов с признаками).
+        4. Ранжирование кандидатов через CatBoost.
+        5. Пост-фильтрацию для обеспечения разнообразия (diversity) категорий.
+
+        Args:
+            user_id (int/str): Внешний идентификатор пользователя.
+            top_n (int): Количество итоговых рекомендаций. По умолчанию 5.
+            category_cap (int): Максимальное количество услуг одной категории 
+                в выдаче. По умолчанию 2.
+
+        Returns:
+            pd.DataFrame: Таблица с колонками ['item_name', 'item_category', 'cb_score'],
+                отсортированная по убыванию релевантности.
+        """
         user_mapper = self.mappers['user_mapper']
         item_mapper = self.mappers['item_mapper']
         user_idx = user_mapper.id_to_idx.get(user_id)
@@ -31,7 +77,6 @@ class ArtNailRecommender:
             return self.item_features.sort_values('item_unique_users', ascending=False).head(top_n)
         
         # 1. Генерация кандидатов через iALS
-        # iALS возвращает индексы и скоры. Мы берем [0], так как юзер один
         ids, scores = self.ials_model.recommend(user_idx, self.user_item_matrix[user_idx], N=50)
         real_item_ids = [item_mapper.idx_to_id[idx] for idx in ids]
 
@@ -66,6 +111,17 @@ class ArtNailRecommender:
         return self._apply_category_cap(user_cands, cap=category_cap, top_n=top_n)
     
     def _apply_category_cap(self, df, cap, top_n):
+        """
+        Ограничивает количество повторений одной категории в финальной выдаче.
+
+        Args:
+            df (pd.DataFrame): Кандидаты со скорами.
+            cap (int): Лимит элементов на одну категорию.
+            top_n (int): Общее количество необходимых рекомендаций.
+
+        Returns:
+            pd.DataFrame: Отфильтрованные и отсортированные рекомендации.
+        """
         # Сортируем по итоговому скору бустинга
         sorted_df = df.sort_values('cb_score', ascending=False)
         
