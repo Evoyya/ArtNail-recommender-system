@@ -24,3 +24,9 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude / AI-assistant data (never push)
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+refactoring/
